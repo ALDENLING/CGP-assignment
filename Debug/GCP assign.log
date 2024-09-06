@@ -1,5 +1,5 @@
 ﻿  mainSource.cpp
   C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\include\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(252,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(442): warning C4715: 'WinMain': not all control paths return a value
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(210,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(437): warning C4715: 'WinMain': not all control paths return a value
   GCP assign.vcxproj -> C:\Users\User\source\repos\GCP assign\Debug\GCP assign.exe

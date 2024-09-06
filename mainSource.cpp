@@ -40,6 +40,8 @@ int nbSpriteHeight = nbtextHeight / nbRow;
 RECT numberRect;
 D3DXVECTOR3 numberPosition;
 
+D3DXVECTOR3 gravityAcc = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
+D3DXVECTOR3 gravity = D3DXVECTOR3(0.0f, 5.0f, 0.0f);
 
 LPDIRECT3DTEXTURE9 player1Texture = NULL;
 int player1textureheight = 256;
@@ -49,7 +51,7 @@ int player1col = 4;
 int player1MaxFrame = 4;
 //float player1Speed = 5.0f;
 D3DXVECTOR3 player1Velocity = D3DXVECTOR3(0, 0, 0);
-D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -6.0f, 0);
+D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -20.0f, 0);
 int player1CurrentFrame = 1;
 RECT player1Rect;
 int player1SpriteHeight = player1textureheight / player1row;
@@ -61,12 +63,6 @@ int player1FrameCounter = 0;
 
 //Sprite Interface / Sprite Brush
 LPD3DXSPRITE spriteBrush = NULL;
-
-//we model physics , not simulate 
-//gravity 
-D3DXVECTOR3 gravity = D3DXVECTOR3(0.0f, 3.0f, 0.0f);
-D3DXVECTOR3 gravityAcc = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
-
 
 void createWindow();
 bool windowIsRunning();
@@ -207,10 +203,13 @@ void sprite()
 
 }
 void Update(int frame) {
-
 	for (int i = 0; i < frame; i++) { 
 
-		if (!playerIsGround()) {
+		if (playerIsGround()) {
+			player1Velocity.y = 0;
+			player1Position.y = windowHeight - player1SpriteHeight;
+			gravity.y = 0;
+		}else{
 			gravity += gravityAcc;
 			player1Position += gravity;
 			player1Position += player1Velocity;
@@ -247,10 +246,6 @@ void Update(int frame) {
 			player1Velocity += jumpForce;
 		}
 
-		if (playerIsGround()) {
-			player1Velocity.y = 0;
-			player1Position.y = windowHeight - player1SpriteHeight;
-		}
 	}
 	if (nbFrameCounter > 9) {
 		nbFrameCounter = 0;
@@ -264,7 +259,7 @@ void Update(int frame) {
 }
 
 bool playerIsGround() {
-	return player1Position.y > windowHeight - player1SpriteHeight;
+	return player1Position.y >windowHeight - player1SpriteHeight;
 }
 
 void cleanSprite()
