@@ -16,6 +16,8 @@ HWND g_hWnd = NULL;
 //	Window's structure
 WNDCLASS wndClass;
 MSG msg;
+int windowHeight = 512;
+int windowWidth = 1024;
 
 LPDIRECTINPUT8 dInput;
 LPDIRECTINPUTDEVICE8  dInputKeyboardDevice;
@@ -47,7 +49,7 @@ int player1col = 4;
 int player1MaxFrame = 4;
 //float player1Speed = 5.0f;
 D3DXVECTOR3 player1Velocity = D3DXVECTOR3(0, 0, 0);
-D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -5.0f, 0);
+D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -6.0f, 0);
 int player1CurrentFrame = 1;
 RECT player1Rect;
 int player1SpriteHeight = player1textureheight / player1row;
@@ -62,8 +64,8 @@ LPD3DXSPRITE spriteBrush = NULL;
 
 //we model physics , not simulate 
 //gravity 
-D3DXVECTOR3 gravity = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
-D3DXVECTOR3 gravityAcc = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+D3DXVECTOR3 gravity = D3DXVECTOR3(0.0f, 3.0f, 0.0f);
+D3DXVECTOR3 gravityAcc = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
 
 
 void createWindow();
@@ -136,7 +138,7 @@ void createWindow() {
 		Create the Window.
 	*/
 	//	You are to refer to MSDN for each of the parameters details.
-	g_hWnd = CreateWindowEx(0, wndClass.lpszClassName, "apek legend", WS_OVERLAPPEDWINDOW, 0, 100, 400, 300, NULL, NULL, GetModuleHandle(NULL), NULL);
+	g_hWnd = CreateWindowEx(0, wndClass.lpszClassName, "apek legend", WS_OVERLAPPEDWINDOW, 0, 100, windowWidth, windowHeight, NULL, NULL, GetModuleHandle(NULL), NULL);
 	ShowWindow(g_hWnd, 1);
 
 	gameTimer->Init(10);
@@ -207,6 +209,7 @@ void sprite()
 void Update(int frame) {
 
 	for (int i = 0; i < frame; i++) { 
+
 		if (!playerIsGround()) {
 			gravity += gravityAcc;
 			player1Position += gravity;
@@ -246,7 +249,7 @@ void Update(int frame) {
 
 		if (playerIsGround()) {
 			player1Velocity.y = 0;
-			player1Position.y = 300 - player1SpriteHeight;
+			player1Position.y = windowHeight - player1SpriteHeight;
 		}
 	}
 	if (nbFrameCounter > 9) {
@@ -261,10 +264,7 @@ void Update(int frame) {
 }
 
 bool playerIsGround() {
-	if (player1Position.y > 300.0f - player1SpriteHeight) {
-		return true;
-	}
-	else { return false; }
+	return player1Position.y > windowHeight - player1SpriteHeight;
 }
 
 void cleanSprite()
@@ -289,8 +289,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	d3dPP.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dPP.BackBufferFormat = D3DFMT_X8R8G8B8;
 	d3dPP.BackBufferCount = 1;
-	d3dPP.BackBufferWidth = 400;
-	d3dPP.BackBufferHeight = 300;
+	d3dPP.BackBufferWidth = windowWidth;
+	d3dPP.BackBufferHeight = windowHeight;
 	d3dPP.hDeviceWindow = g_hWnd;
 
 
