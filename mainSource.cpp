@@ -50,8 +50,9 @@ int player1row = 4;
 int player1col = 4;
 int player1MaxFrame = 4;
 //float player1Speed = 5.0f;
+D3DXVECTOR3 player1Speed = D3DXVECTOR3(10.0f, 0, 0);
 D3DXVECTOR3 player1Velocity = D3DXVECTOR3(0, 0, 0);
-D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -20.0f, 0);
+D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -25.0f, 0);
 int player1CurrentFrame = 1;
 RECT player1Rect;
 int player1SpriteHeight = player1textureheight / player1row;
@@ -137,7 +138,7 @@ void createWindow() {
 	g_hWnd = CreateWindowEx(0, wndClass.lpszClassName, "apek legend", WS_OVERLAPPEDWINDOW, 0, 100, windowWidth, windowHeight, NULL, NULL, GetModuleHandle(NULL), NULL);
 	ShowWindow(g_hWnd, 1);
 
-	gameTimer->Init(10);
+	gameTimer->Init(30);
 
 	//	Some interesting function to try out.
 	//	ShowCursor(false);
@@ -209,6 +210,11 @@ void Update(int frame) {
 			player1Velocity.y = 0;
 			player1Position.y = windowHeight - player1SpriteHeight;
 			gravity.y = 0;
+			if (diKeys[DIK_SPACE] & 0x80)
+			{
+				player1CurrentDirection = MOVEUP;
+				player1Velocity += jumpForce;
+			}
 		}else{
 			gravity += gravityAcc;
 			player1Position += gravity;
@@ -227,23 +233,18 @@ void Update(int frame) {
 			player1CurrentDirection = MOVEDOWN;
 			player1CurrentFrame++;
 			player1Position.y += player1Speed;
-		}
+		}*/
 		if (diKeys[DIK_RIGHT] & 0x80)
 		{
 			player1CurrentDirection = MOVERIGHT;
 			player1CurrentFrame++;
-			player1Position.x += player1Speed;
+			player1Position += player1Speed;
 		}
 		if (diKeys[DIK_LEFT] & 0x80)
 		{
 			player1CurrentDirection = MOVELEFT;
 			player1CurrentFrame--;
-			player1Position.x -= player1Speed;
-		}*/
-		if (diKeys[DIK_SPACE] & 0x80)
-		{
-			player1CurrentDirection = MOVEUP;
-			player1Velocity += jumpForce;
+			player1Position -= player1Speed;
 		}
 
 	}
