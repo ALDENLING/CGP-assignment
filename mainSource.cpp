@@ -59,7 +59,7 @@ int player1SpriteHeight = player1textureheight / player1row;
 int player1SpriteWidth = player1texturewidth / player1col;
 enum player1Direction { MOVEDOWN, MOVELEFT, MOVERIGHT, MOVEUP };
 int player1CurrentDirection = MOVEDOWN;
-D3DXVECTOR3 player1Position(0, 0, 0);
+D3DXVECTOR3 player1Position(200, 0, 0);
 int player1FrameCounter = 0;
 
 //Sprite Interface / Sprite Brush
