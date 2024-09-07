@@ -143,7 +143,7 @@ void createWindow() {
 	g_hWnd = CreateWindowEx(0, wndClass.lpszClassName, "apek legend", WS_OVERLAPPEDWINDOW, 0, 100, windowWidth, windowHeight, NULL, NULL, GetModuleHandle(NULL), NULL);
 	ShowWindow(g_hWnd, 1);
 
-	gameTimer->Init(30);
+	gameTimer->Init(40); // fps setting 
 
 	//	Some interesting function to try out.
 	//	ShowCursor(false);
