@@ -65,11 +65,16 @@ int player1FrameCounter = 0;
 //Sprite Interface / Sprite Brush
 LPD3DXSPRITE spriteBrush = NULL;
 
+bool isPlayerGrounded = false;
+bool isPlayerJumped = false;
+
 void createWindow();
 bool windowIsRunning();
 void cleanupWindow();
 void sprite();
 bool playerIsGround();
+int playerWhichSide();
+bool playerIsJumping();
 
 FrameTimer *gameTimer = new FrameTimer();
 
@@ -210,15 +215,44 @@ void Update(int frame) {
 			player1Velocity.y = 0;
 			player1Position.y = windowHeight - player1SpriteHeight;
 			gravity.y = 0;
-			if (diKeys[DIK_SPACE] & 0x80)
-			{
+			isPlayerGrounded = true; // Set grounded state
+			isPlayerJumped = false;
+
+			if (diKeys[DIK_SPACE] & 0x80) {
 				player1CurrentDirection = MOVEUP;
+				isPlayerJumped = true;
 				player1Velocity += jumpForce;
+				isPlayerGrounded = false; // Set to false when jumping
 			}
-		}else{
+		}
+		else {
 			gravity += gravityAcc;
 			player1Position += gravity;
 			player1Position += player1Velocity;
+
+			if (player1Position.y >= windowHeight - player1SpriteHeight) {
+				player1Position.y = windowHeight - player1SpriteHeight;
+				isPlayerGrounded = true; // Set grounded state
+			}
+			else {
+				isPlayerGrounded = false; // Player is in the air
+			}
+		}
+
+		if (playerWhichSide()!=1) {
+			player1Speed.x *= -1;
+		}
+		
+		if (playerWhichSide() !=1 && !playerIsJumping()) {
+			if (playerWhichSide() == 2) {
+				player1Position.x = windowWidth - player1SpriteWidth;
+			}
+			else if (playerWhichSide() == 0) { 
+				player1Position.x = 0; }
+		}
+
+		if (player1Speed.x < 0 && playerIsGround()) {
+			player1Speed.x *= -1;
 		}
 		
 		//nbFrameCounter++; 
@@ -243,7 +277,7 @@ void Update(int frame) {
 		if (diKeys[DIK_LEFT] & 0x80)
 		{
 			player1CurrentDirection = MOVELEFT;
-			player1CurrentFrame--;
+			player1CurrentFrame++;
 			player1Position -= player1Speed;
 		}
 
@@ -260,7 +294,17 @@ void Update(int frame) {
 }
 
 bool playerIsGround() {
-	return player1Position.y >windowHeight - player1SpriteHeight;
+	return isPlayerGrounded;
+}
+
+int playerWhichSide() {
+	if (player1Position.x < 0) { return 0; }
+	else if (player1Position.x > (windowWidth - player1SpriteWidth)) { return 2; }
+	else { return 1; }
+}
+
+bool playerIsJumping(){
+	return isPlayerJumped;
 }
 
 void cleanSprite()
