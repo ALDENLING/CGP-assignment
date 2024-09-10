@@ -7,7 +7,10 @@
 #include <dinput.h>
 #pragma comment (lib , "d3dx9.lib")
 #include <iostream>
+#include <fstream>
+#include <string>
 #include "FrameTimer.h"
+#include "AudioManager.h"
 using namespace std;
 //--------------------------------------------------------------------
 
@@ -18,6 +21,7 @@ WNDCLASS wndClass;
 MSG msg;
 int windowHeight = 512;
 int windowWidth = 1024;
+int grassSquare = 32;
 
 LPDIRECTINPUT8 dInput;
 LPDIRECTINPUTDEVICE8  dInputKeyboardDevice;
@@ -27,18 +31,14 @@ BYTE  diKeys[256];
 //	Define how the screen presents.
 D3DPRESENT_PARAMETERS d3dPP;
 
+
+LPDIRECT3DTEXTURE9 standGrassTexture = NULL;
+LPDIRECT3DTEXTURE9 groundGrassTexture = NULL;
+
 //pointer Texture
-LPDIRECT3DTEXTURE9 texture = NULL;
-int nbtextWidth = 128;
-int nbtextHeight = 128;
-int nbFrameCounter = 10;
-int nbCol = 4;
-int nbRow = 4;
-int nbMaxFrame = 9;
-int nbSpriteWidth = nbtextWidth / nbCol;
-int nbSpriteHeight = nbtextHeight / nbRow;
-RECT numberRect;
-D3DXVECTOR3 numberPosition;
+LPDIRECT3DTEXTURE9 backgroundTexture = NULL;
+int bgWidth = windowWidth;
+int bgHeight = windowHeight;
 
 D3DXVECTOR3 gravityAcc = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
 D3DXVECTOR3 gravity = D3DXVECTOR3(0.0f, 5.0f, 0.0f);
@@ -49,7 +49,7 @@ int player1texturewidth = 128;
 int player1row = 4;
 int player1col = 4;
 int player1MaxFrame = 4;
-//float player1Speed = 5.0f;
+
 D3DXVECTOR3 player1Speed = D3DXVECTOR3(10.0f, 0, 0);
 D3DXVECTOR3 player1Velocity = D3DXVECTOR3(0, 0, 0);
 D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -25.0f, 0);
@@ -60,13 +60,21 @@ int player1SpriteWidth = player1texturewidth / player1col;
 enum player1Direction { MOVEDOWN, MOVELEFT, MOVERIGHT, MOVEUP };
 int player1CurrentDirection = MOVEDOWN;
 D3DXVECTOR3 player1Position(200, 0, 0);
+D3DXVECTOR3 test(200, 20, 0);
 int player1FrameCounter = 0;
+
+D3DXVECTOR3 grassPosition(0, 0, 0);
 
 //Sprite Interface / Sprite Brush
 LPD3DXSPRITE spriteBrush = NULL;
 
+int oldYPosition = 0;
+int newYPosition = 0;
 bool isPlayerGrounded = false;
 bool isPlayerJumped = false;
+bool isPlayerAtGlass = false;
+
+AudioManager* theAudioManager = new AudioManager();
 
 void createWindow();
 bool windowIsRunning();
@@ -75,6 +83,11 @@ void sprite();
 bool playerIsGround();
 int playerWhichSide();
 bool playerIsJumping();
+int playerWhichArea();
+void levelArrange();
+bool playerAtGlass();
+bool playerIsFalling();
+
 
 FrameTimer *gameTimer = new FrameTimer();
 
@@ -149,6 +162,11 @@ void createWindow() {
 	//	ShowCursor(false);
 
 	ZeroMemory(&msg, sizeof(msg));
+
+	theAudioManager->InitializeAudio();
+	theAudioManager->LoadSounds();
+	theAudioManager->PlayBgm();
+	theAudioManager->PlayMusic();
 }
 
 bool windowIsRunning() {
@@ -213,26 +231,44 @@ void Update(int frame) {
 
 		if (playerIsGround()) {
 			player1Velocity.y = 0;
-			player1Position.y = windowHeight - player1SpriteHeight;
+			//player1Position.y = windowHeight - player1SpriteHeight;
 			gravity.y = 0;
 			isPlayerGrounded = true; // Set grounded state
-			isPlayerJumped = false;
+			isPlayerJumped = false;		
+				if (diKeys[DIK_SPACE] & 0x80) {
+					player1CurrentDirection = MOVEUP;
+					//isPlayerJumped = true;
+					player1Velocity.y = 0;
+					player1Velocity += jumpForce;
+					isPlayerGrounded = false; // Set to false when jumping
 
-			if (diKeys[DIK_SPACE] & 0x80) {
-				player1CurrentDirection = MOVEUP;
-				isPlayerJumped = true;
-				player1Velocity += jumpForce;
-				isPlayerGrounded = false; // Set to false when jumping
+					switch (playerWhichArea()) {
+					case 1:theAudioManager->Play1Jump(); break;
+					case 2:theAudioManager->Play2Jump(); break;
+					case 3:theAudioManager->Play3Jump(); break;
+					case 4:theAudioManager->Play4Jump(); break;
+					}
+				}
 			}
-		}
 		else {
+			oldYPosition = player1Position.y;
+
 			gravity += gravityAcc;
 			player1Position += gravity;
 			player1Position += player1Velocity;
 
-			if (player1Position.y >= windowHeight - player1SpriteHeight) {
+			newYPosition = player1Position.y;
+
+			if ((player1Position.y >= windowHeight - player1SpriteHeight)&&(playerAtGlass()==false)) {
 				player1Position.y = windowHeight - player1SpriteHeight;
-				isPlayerGrounded = true; // Set grounded state
+				isPlayerGrounded = true;
+				player1Velocity.y = 0; // Set grounded state
+				switch (playerWhichArea()) {
+				case 1:theAudioManager->Play1Footstep(); break;
+				case 2:theAudioManager->Play2Footstep(); break;
+				case 3:theAudioManager->Play3Footstep(); break;
+				case 4:theAudioManager->Play4Footstep(); break;
+				}
 			}
 			else {
 				isPlayerGrounded = false; // Player is in the air
@@ -282,9 +318,6 @@ void Update(int frame) {
 		}
 
 	}
-	if (nbFrameCounter > 9) {
-		nbFrameCounter = 0;
-	}
 	if (diKeys[DIK_ESCAPE] & 0x80)
 	{
 		std::cout << "Escape" << std::endl;
@@ -307,6 +340,20 @@ bool playerIsJumping(){
 	return isPlayerJumped;
 }
 
+bool playerAtGlass() {
+	return isPlayerAtGlass;
+}
+bool playerIsFalling() {
+	return (!isPlayerGrounded) && ((oldYPosition - newYPosition) < 0);
+}
+
+int playerWhichArea() {
+	if ( player1Position.x < (windowWidth / 4)) { return 1; }
+	else if (player1Position.x >= (windowWidth / 4) && player1Position.x < (windowWidth / 2)) { return 2; }
+	else if (player1Position.x >= (windowWidth / 2) && player1Position.x < (windowWidth * 3 / 4)) { return 3; }
+	else { return 4; }
+}
+
 void cleanSprite()
 {
 
@@ -316,8 +363,54 @@ void GetInput() {
 	dInputKeyboardDevice->GetDeviceState(256, diKeys);
 }
 
+void levelArrange() {
+	int unitWidth = 0;
+	int unitHeight = 0;
+
+	ifstream levelFile("level/1.txt");
+
+	char ch;
+
+	while (levelFile.get(ch)) {
+		if (ch == '0') {
+			grassPosition.x = unitWidth * grassSquare;
+			grassPosition.y = unitHeight * grassSquare;
+			RECT grassRect;
+			grassRect.left = 0;
+			grassRect.top = 0;
+			grassRect.right = grassSquare;
+			grassRect.bottom = grassSquare;
+
+			spriteBrush->Draw(standGrassTexture, &grassRect, NULL, &grassPosition, D3DCOLOR_XRGB(255, 255, 255));
+				if (((player1Position.y + player1SpriteHeight) == grassPosition.y) &&
+					((player1Position.x + player1SpriteWidth) >= grassPosition.x) &&
+					(player1Position.x <= (grassPosition.x + grassSquare))) {
+					if (playerIsFalling()) {
+						isPlayerGrounded = true;
+					}
+				}
+		}else if (ch=='2'){
+			grassPosition.x = unitWidth * grassSquare;
+			grassPosition.y = unitHeight * grassSquare;
+			RECT grassRect;
+			grassRect.left = 0;
+			grassRect.top = 0;
+			grassRect.right = grassSquare;
+			grassRect.bottom = grassSquare;
+
+			spriteBrush->Draw(groundGrassTexture, &grassRect, NULL, &grassPosition, D3DCOLOR_XRGB(255, 255, 255));
+		}
+		else if (ch == '\n') {
+			unitWidth = -1;
+			unitHeight++;
+		}
+		unitWidth++;
+	}
+
+	levelFile.close();
+}
 //	use WinMain if you don't want the console
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	createWindow();
 	IDirect3DDevice9* d3dDevice;
@@ -335,16 +428,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//	Create a Direct3D 9 device.
-	HRESULT hrx = direct3D9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, g_hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dPP, &d3dDevice);
+	HRESULT hrbg = direct3D9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, g_hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dPP, &d3dDevice);
 
 	//	To Do: Cout out the message to indicate the failure.
-	if (FAILED(hrx))
+	if (FAILED(hrbg))
 		return 0;
 	//	Create sprite. Study the documentation. 
 	HRESULT hr = D3DXCreateSprite(d3dDevice, &spriteBrush); // pass in your graphic card
 	//	Create texture. Study the documentation.
 	//Reading the file from HDD and storing it in the GPU(DEVICE)
-	//hr = D3DXCreateTextureFromFile(d3dDevice, "04.bmp", &texture);
+	hr = D3DXCreateTextureFromFile(d3dDevice, "image/background.png", &backgroundTexture);
+
+	if (FAILED(hr))
+	{
+		// Handle error
+		return 0;
+	}
+
+	hr = D3DXCreateTextureFromFile(d3dDevice, "image/standgrass.png", &standGrassTexture);
+
+	if (FAILED(hr))
+	{
+		// Handle error
+		return 0;
+	}
+
+	hr = D3DXCreateTextureFromFile(d3dDevice, "image/groundgrass.png", &groundGrassTexture);
+
+	/*hr = D3DXCreateTextureFromFileEx(d3dDevice, "image/background.png", D3DX_DEFAULT, D3DX_DEFAULT,
+		D3DX_DEFAULT, NULL, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+		D3DX_DEFAULT, D3DX_DEFAULT, D3DCOLOR_XRGB(255, 255, 255),
+		NULL, NULL, &backgroundTexture);*/
+
+	if (FAILED(hr))
+	{
+		// Handle error
+		return 0;
+	}
 
 	hr = D3DXCreateTextureFromFileEx(d3dDevice, "image/militia.png", D3DX_DEFAULT, D3DX_DEFAULT,
 		D3DX_DEFAULT, NULL, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
@@ -357,7 +477,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-	HRESULT HelloWorld = D3DXCreateSprite(d3dDevice, &spriteBrush);
+	/*HRESULT HelloWorld = D3DXCreateSprite(d3dDevice, &spriteBrush);
 	LPD3DXFONT font = NULL;
 
 	HelloWorld = hr = D3DXCreateFont(d3dDevice, 25, 0, 0, 1, false,
@@ -366,7 +486,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	HRESULT hline = D3DXCreateSprite(d3dDevice, &spriteBrush);
 	LPD3DXLINE line = NULL;
-	hline = D3DXCreateLine(d3dDevice, &line);
+	hline = D3DXCreateLine(d3dDevice, &line);*/
 
 	hr = DirectInput8Create(GetModuleHandle(NULL), 0x0800, IID_IDirectInput8, (void**)&dInput, NULL);
 
@@ -386,6 +506,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	while (windowIsRunning())
 	{
+		cout << playerIsFalling() << endl;
 		//cout << gameTimer->FramesToUpdate() << endl;
 		GetInput();
 		//Physics
@@ -404,14 +525,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//sprite brush, begin drawing
 		spriteBrush->Begin(D3DXSPRITE_ALPHABLEND);
 
-		Update(gameTimer->FramesToUpdate());
-
 		//	Specify the "	" rectangle.
-		RECT spriteRect;
+		/*RECT spriteRect;
 		spriteRect.left = nbFrameCounter % nbRow * nbSpriteWidth;
 		spriteRect.top = nbFrameCounter / nbCol * nbSpriteWidth;
 		spriteRect.right = spriteRect.left + nbSpriteWidth;
-		spriteRect.bottom = spriteRect.top + nbSpriteHeight;
+		spriteRect.bottom = spriteRect.top + nbSpriteHeight;*/
 
 		//	Sprite rendering. Study the documentation.
 	/*	spriteBrush->Draw(texture, &spriteRect, NULL, &numberPosition, D3DCOLOR_XRGB(255, 255, 255));*/
@@ -422,16 +541,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//	End sprite drawing
 		//sprite brush stop drawing
 
-		RECT textRect;
-		textRect.left = 100;
-		textRect.top = 100;
-		textRect.right = 500;
-		textRect.bottom = 125;
+		RECT bgRect;
+		bgRect.left = 0;
+		bgRect.top = 0;
+		bgRect.right = bgWidth;
+		bgRect.bottom = bgHeight;
 
-		//font->DrawText(spriteBrush, "Hello World!", 20, &textRect, 0, D3DCOLOR_XRGB(255, 255, 255));
+		spriteBrush->Draw(backgroundTexture, &bgRect, NULL, NULL, D3DCOLOR_XRGB(255, 255, 255));
 
+		//RECT grassRect;
+		//grassRect.left = 0;
+		//grassRect.top = 0;
+		//grassRect.right = grassSquare;
+		//grassRect.bottom = grassSquare;
 
-		D3DXVECTOR2 lineVertices[] = { D3DXVECTOR2(200, 200), D3DXVECTOR2(200, 400) };
+		//spriteBrush->Draw(standGrassTexture, &grassRect, NULL, &test, D3DCOLOR_XRGB(255, 255, 255));
+
+		//D3DXVECTOR2 lineVertices[] = { D3DXVECTOR2(200, 200), D3DXVECTOR2(200, 400) };
 		//	Begin to draw the lines.
 		/*line->Begin();
 		line->Draw(lineVertices, 2, D3DCOLOR_XRGB(255, 255, 255));
@@ -444,8 +570,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		player1Rect.right = player1Rect.left + player1SpriteWidth;
 
 		spriteBrush->Draw(player1Texture, &player1Rect, NULL, &player1Position, D3DCOLOR_XRGB(255, 255, 255));
-		
 
+		levelArrange();
+		Update(gameTimer->FramesToUpdate());
+		
 		spriteBrush->End();
 		//	End the scene  
 		d3dDevice->EndScene();
@@ -454,7 +582,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		d3dDevice->Present(NULL, NULL, NULL, NULL);
 		//Sound
 		//	To Do:
-
 
 	}
 
@@ -478,6 +605,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//	Reset pointer to NULL, a good practice.
 	d3dDevice = NULL;
 	cleanupWindow();
+
+	return 0;
 
 }
 //--------------------------------------------------------------------
