@@ -21,7 +21,10 @@ WNDCLASS wndClass;
 MSG msg;
 int windowHeight = 512;
 int windowWidth = 1024;
+//<<<<<<< Updated upstream
 int grassSquare = 32;
+//=======
+//>>>>> Stashed changes
 
 LPDIRECTINPUT8 dInput;
 LPDIRECTINPUTDEVICE8  dInputKeyboardDevice;
@@ -32,6 +35,7 @@ BYTE  diKeys[256];
 D3DPRESENT_PARAMETERS d3dPP;
 
 
+//<<<<<<< Updated upstream
 LPDIRECT3DTEXTURE9 standGrassTexture = NULL;
 LPDIRECT3DTEXTURE9 groundGrassTexture = NULL;
 
@@ -40,6 +44,8 @@ LPDIRECT3DTEXTURE9 backgroundTexture = NULL;
 int bgWidth = windowWidth;
 int bgHeight = windowHeight;
 
+//=======
+//>>>>>>> Stashed changes
 D3DXVECTOR3 gravityAcc = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
 D3DXVECTOR3 gravity = D3DXVECTOR3(0.0f, 5.0f, 0.0f);
 
@@ -49,7 +55,11 @@ int player1texturewidth = 128;
 int player1row = 4;
 int player1col = 4;
 int player1MaxFrame = 4;
+//<<<<<<< Updated upstream
 
+//=======
+//float player1Speed = 5.0f;
+//>>>>>>> Stashed changes
 D3DXVECTOR3 player1Speed = D3DXVECTOR3(10.0f, 0, 0);
 D3DXVECTOR3 player1Velocity = D3DXVECTOR3(0, 0, 0);
 D3DXVECTOR3 jumpForce = D3DXVECTOR3(0, -25.0f, 0);
@@ -60,7 +70,10 @@ int player1SpriteWidth = player1texturewidth / player1col;
 enum player1Direction { MOVEDOWN, MOVELEFT, MOVERIGHT, MOVEUP };
 int player1CurrentDirection = MOVEDOWN;
 D3DXVECTOR3 player1Position(200, 0, 0);
+//<<<<<<< Updated upstream
 D3DXVECTOR3 test(200, 20, 0);
+//=======
+//>>>>>>> Stashed changes
 int player1FrameCounter = 0;
 
 D3DXVECTOR3 grassPosition(0, 0, 0);
@@ -68,6 +81,7 @@ D3DXVECTOR3 grassPosition(0, 0, 0);
 //Sprite Interface / Sprite Brush
 LPD3DXSPRITE spriteBrush = NULL;
 
+//<<<<<<< Updated upstream
 int oldYPosition = 0;
 int newYPosition = 0;
 bool isPlayerGrounded = false;
@@ -75,6 +89,10 @@ bool isPlayerJumped = false;
 bool isPlayerAtGlass = false;
 
 AudioManager* theAudioManager = new AudioManager();
+//=======
+
+
+//>>>>>>> Stashed changes
 
 void createWindow();
 bool windowIsRunning();
@@ -83,13 +101,15 @@ void sprite();
 bool playerIsGround();
 int playerWhichSide();
 bool playerIsJumping();
+//<<<<<<< Updated upstream
 int playerWhichArea();
 void levelArrange();
 bool playerAtGlass();
 bool playerIsFalling();
 
+//>>>>>>> Stashed changes
 
-FrameTimer *gameTimer = new FrameTimer();
+FrameTimer* gameTimer = new FrameTimer();
 
 //	Window Procedure, for event handling
 LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -226,107 +246,169 @@ void sprite()
 {
 
 }
+void GetInput() {
+	dInputKeyboardDevice->Acquire();
+	dInputKeyboardDevice->GetDeviceState(256, diKeys);
+}
 void Update(int frame) {
-	for (int i = 0; i < frame; i++) { 
+	//<<<<<<< Updated upstream
+	for (int i = 0; i < frame; i++) {
 
 		if (playerIsGround()) {
 			player1Velocity.y = 0;
 			//player1Position.y = windowHeight - player1SpriteHeight;
 			gravity.y = 0;
 			isPlayerGrounded = true; // Set grounded state
-			isPlayerJumped = false;		
-				if (diKeys[DIK_SPACE] & 0x80) {
-					player1CurrentDirection = MOVEUP;
-					//isPlayerJumped = true;
-					player1Velocity.y = 0;
-					player1Velocity += jumpForce;
-					isPlayerGrounded = false; // Set to false when jumping
+			isPlayerJumped = false;
+			if (diKeys[DIK_SPACE] & 0x80) {
+				player1CurrentDirection = MOVEUP;
+				//isPlayerJumped = true;
+				player1Velocity.y = 0;
+				player1Velocity += jumpForce;
+				isPlayerGrounded = false; // Set to false when jumping
 
-					switch (playerWhichArea()) {
-					case 1:theAudioManager->Play1Jump(); break;
-					case 2:theAudioManager->Play2Jump(); break;
-					case 3:theAudioManager->Play3Jump(); break;
-					case 4:theAudioManager->Play4Jump(); break;
-					}
+				switch (playerWhichArea()) {
+				case 1:theAudioManager->Play1Jump(); break;
+				case 2:theAudioManager->Play2Jump(); break;
+				case 3:theAudioManager->Play3Jump(); break;
+				case 4:theAudioManager->Play4Jump(); break;
 				}
 			}
+		}
 		else {
 			oldYPosition = player1Position.y;
 
-			gravity += gravityAcc;
-			player1Position += gravity;
-			player1Position += player1Velocity;
+			//=======
+			for (int i = 0; i < frame; i++) {
 
-			newYPosition = player1Position.y;
+				if (playerIsGround()) {
+					player1Velocity.y = 0;
+					player1Position.y = windowHeight - player1SpriteHeight;
+					gravity.y = 0;
+					isPlayerGrounded = true; // Set grounded state
+					isPlayerJumped = false;
 
-			if ((player1Position.y >= windowHeight - player1SpriteHeight)&&(playerAtGlass()==false)) {
-				player1Position.y = windowHeight - player1SpriteHeight;
-				isPlayerGrounded = true;
-				player1Velocity.y = 0; // Set grounded state
-				switch (playerWhichArea()) {
-				case 1:theAudioManager->Play1Footstep(); break;
-				case 2:theAudioManager->Play2Footstep(); break;
-				case 3:theAudioManager->Play3Footstep(); break;
-				case 4:theAudioManager->Play4Footstep(); break;
+					if (diKeys[DIK_SPACE] & 0x80) {
+						player1CurrentDirection = MOVEUP;
+						isPlayerJumped = true;
+						player1Velocity += jumpForce;
+						isPlayerGrounded = false; // Set to false when jumping
+					}
+				}
+				else {
+					//>>>>>>> Stashed changes
+					gravity += gravityAcc;
+					player1Position += gravity;
+					player1Position += player1Velocity;
+
+					//<<<<<<< Updated upstream
+					newYPosition = player1Position.y;
+
+					if ((player1Position.y >= windowHeight - player1SpriteHeight) && (playerAtGlass() == false)) {
+						player1Position.y = windowHeight - player1SpriteHeight;
+						isPlayerGrounded = true;
+						player1Velocity.y = 0; // Set grounded state
+						switch (playerWhichArea()) {
+						case 1:theAudioManager->Play1Footstep(); break;
+						case 2:theAudioManager->Play2Footstep(); break;
+						case 3:theAudioManager->Play3Footstep(); break;
+						case 4:theAudioManager->Play4Footstep(); break;
+						}
+						//=======
+						if (player1Position.y >= windowHeight - player1SpriteHeight) {
+							player1Position.y = windowHeight - player1SpriteHeight;
+							isPlayerGrounded = true; // Set grounded state
+							//>>>>>>> Stashed changes
+						}
+						else {
+							isPlayerGrounded = false; // Player is in the air
+						}
+						//<<<<<<< Updated upstream
+					}
+
+					if (playerWhichSide() != 1) {
+						player1Speed.x *= -1;
+					}
+
+					if (playerWhichSide() != 1 && !playerIsJumping()) {
+						if (playerWhichSide() == 2) {
+							player1Position.x = windowWidth - player1SpriteWidth;
+						}
+						else if (playerWhichSide() == 0) {
+							player1Position.x = 0;
+						}
+					}
+
+					if (player1Speed.x < 0 && playerIsGround()) {
+						player1Speed.x *= -1;
+						//=======
+						//>>>>>>> Stashed changes
+					}
+
+					if (playerWhichSide() != 1) {
+						player1Speed.x *= -1;
+					}
+
+					if (playerWhichSide() != 1 && !playerIsJumping()) {
+						if (playerWhichSide() == 2) {
+							player1Position.x = windowWidth - player1SpriteWidth;
+						}
+						else if (playerWhichSide() == 0) {
+							player1Position.x = 0;
+						}
+					}
+
+					if (player1Speed.x < 0 && playerIsGround()) {
+						player1Speed.x *= -1;
+					}
+
+					//nbFrameCounter++; 
+					/*if (diKeys[DIK_UP] & 0x80)
+					{
+						player1CurrentDirection = MOVEUP;
+						player1CurrentFrame++;
+						player1Position.y -= player1Speed;
+					}
+					if (diKeys[DIK_DOWN] & 0x80)
+					{
+						player1CurrentDirection = MOVEDOWN;
+						player1CurrentFrame++;
+						player1Position.y += player1Speed;
+					}*/
+					if (diKeys[DIK_RIGHT] & 0x80)
+					{
+						player1CurrentDirection = MOVERIGHT;
+						player1CurrentFrame++;
+						player1Position += player1Speed;
+					}
+					if (diKeys[DIK_LEFT] & 0x80)
+					{
+						player1CurrentDirection = MOVELEFT;
+						player1CurrentFrame++;
+						player1Position -= player1Speed;
+					}
+
+					//<<<<<<< Updated upstream
+					/*=======
+						}
+						if (nbFrameCounter > 9) {
+							nbFrameCounter = 0;
+					//>>>>>>> Stashed changes
+						}
+						*/
+					if (diKeys[DIK_ESCAPE] & 0x80)
+					{
+						std::cout << "Escape" << std::endl;
+						PostQuitMessage(0);
+					}
+
 				}
 			}
-			else {
-				isPlayerGrounded = false; // Player is in the air
-			}
 		}
-
-		if (playerWhichSide()!=1) {
-			player1Speed.x *= -1;
-		}
-		
-		if (playerWhichSide() !=1 && !playerIsJumping()) {
-			if (playerWhichSide() == 2) {
-				player1Position.x = windowWidth - player1SpriteWidth;
-			}
-			else if (playerWhichSide() == 0) { 
-				player1Position.x = 0; }
-		}
-
-		if (player1Speed.x < 0 && playerIsGround()) {
-			player1Speed.x *= -1;
-		}
-		
-		//nbFrameCounter++; 
-		/*if (diKeys[DIK_UP] & 0x80)
-		{
-			player1CurrentDirection = MOVEUP;
-			player1CurrentFrame++;
-			player1Position.y -= player1Speed;
-		}
-		if (diKeys[DIK_DOWN] & 0x80)
-		{
-			player1CurrentDirection = MOVEDOWN;
-			player1CurrentFrame++;
-			player1Position.y += player1Speed;
-		}*/
-		if (diKeys[DIK_RIGHT] & 0x80)
-		{
-			player1CurrentDirection = MOVERIGHT;
-			player1CurrentFrame++;
-			player1Position += player1Speed;
-		}
-		if (diKeys[DIK_LEFT] & 0x80)
-		{
-			player1CurrentDirection = MOVELEFT;
-			player1CurrentFrame++;
-			player1Position -= player1Speed;
-		}
-
 	}
-	if (diKeys[DIK_ESCAPE] & 0x80)
-	{
-		std::cout << "Escape" << std::endl;
-		PostQuitMessage(0);
-	}
-	
 }
 
-bool playerIsGround() {
+bool playerIsGround(){
 	return isPlayerGrounded;
 }
 
@@ -336,6 +418,7 @@ int playerWhichSide() {
 	else { return 1; }
 }
 
+//<<<<<<< Updated upstream
 bool playerIsJumping(){
 	return isPlayerJumped;
 }
@@ -348,24 +431,33 @@ bool playerIsFalling() {
 }
 
 int playerWhichArea() {
-	if ( player1Position.x < (windowWidth / 4)) { return 1; }
-	else if (player1Position.x >= (windowWidth / 4) && player1Position.x < (windowWidth / 2)) { return 2; }
-	else if (player1Position.x >= (windowWidth / 2) && player1Position.x < (windowWidth * 3 / 4)) { return 3; }
-	else { return 4; }
+	if (player1Position.x < (windowWidth / 4)) {
+		return 1;
+	}
+	else if (player1Position.x >= (windowWidth / 4) && player1Position.x < (windowWidth / 2)) {
+		return 2;
+	}
+	else if (player1Position.x >= (windowWidth / 2) && player1Position.x < (windowWidth * 3 / 4))
+	{
+		return 3;
+	}
+	else {
+		return 4;
+	}
 }
+//=======
+
 
 void cleanSprite()
 {
 
 }
-void GetInput() {
-	dInputKeyboardDevice->Acquire();
-	dInputKeyboardDevice->GetDeviceState(256, diKeys);
-}
+
 
 void levelArrange() {
-	int unitWidth = 0;
+	
 	int unitHeight = 0;
+	int unitWidth = 0;
 
 	ifstream levelFile("level/1.txt");
 
@@ -570,6 +662,10 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 		player1Rect.right = player1Rect.left + player1SpriteWidth;
 
 		spriteBrush->Draw(player1Texture, &player1Rect, NULL, &player1Position, D3DCOLOR_XRGB(255, 255, 255));
+//<<<<<<< Updated upstream
+//=======
+
+//>>>>>>> Stashed changes
 
 		levelArrange();
 		Update(gameTimer->FramesToUpdate());
