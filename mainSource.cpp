@@ -41,7 +41,6 @@ int bgWidth = windowWidth;
 int bgHeight = windowHeight;
 
 D3DXVECTOR3 gravityAcc = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
-D3DXVECTOR3 gravity = D3DXVECTOR3(0.0f, 5.0f, 0.0f);
 
 LPDIRECT3DTEXTURE9 player1Texture = NULL;
 int player1textureheight = 256;
@@ -59,7 +58,7 @@ int player1SpriteHeight = player1textureheight / player1row;
 int player1SpriteWidth = player1texturewidth / player1col;
 enum player1Direction { MOVEDOWN, MOVELEFT, MOVERIGHT, MOVEUP };
 int player1CurrentDirection = MOVEDOWN;
-D3DXVECTOR3 player1Position(200, 0, 0);
+D3DXVECTOR3 player1Position(0, 0, 0);
 D3DXVECTOR3 test(200, 20, 0);
 int player1FrameCounter = 0;
 
@@ -70,9 +69,12 @@ LPD3DXSPRITE spriteBrush = NULL;
 
 int oldYPosition = 0;
 int newYPosition = 0;
+int oldXPosition = 0;
+int newXPosition = 0;
 bool isPlayerGrounded = false;
 bool isPlayerJumped = false;
 bool isPlayerAtGlass = false;
+bool isPlayerMoving = false;
 
 AudioManager* theAudioManager = new AudioManager();
 
@@ -87,6 +89,8 @@ int playerWhichArea();
 void levelArrange();
 bool playerIsFalling();
 bool playerAtGrass();
+void gravityCheck();
+bool playerIsMoving();
 
 
 FrameTimer* gameTimer = new FrameTimer();
@@ -228,56 +232,45 @@ void sprite()
 }
 void Update(int frame) {
 	for (int i = 0; i < frame; i++) {
-
-		if (playerIsGround()) {
-			//if (!playerAtGrass()) {
-			player1Velocity.y = 0;
-			player1Position.y = newYPosition;
-			gravity.y = 0;
-			isPlayerGrounded = true; // Set grounded state
-			isPlayerJumped = false;
-			if (diKeys[DIK_SPACE] & 0x80) {
-				player1CurrentDirection = MOVEUP;
-				//player1Position.y = newYPosition;
-				//isPlayerJumped = true;
-				player1Velocity.y = 0;
-				player1Velocity += jumpForce;
-				isPlayerAtGlass = false;
-				isPlayerGrounded = false; // Set to false when jumping
-
-				switch (playerWhichArea()) {
-				case 1:theAudioManager->Play1Jump(); break;
-				case 2:theAudioManager->Play2Jump(); break;
-				case 3:theAudioManager->Play3Jump(); break;
-				case 4:theAudioManager->Play4Jump(); break;
-				}
-				//}
-			}
+		gravityCheck();
+		if (player1Position.y >= windowHeight - player1SpriteHeight) {
+			isPlayerGrounded = true;
 		}
-		else {
-			oldYPosition = player1Position.y;
 
-			gravity += gravityAcc;
-			player1Position += gravity;
-			player1Position += player1Velocity;
+		//if (playerIsGround()) {
+		//	if (diKeys[DIK_SPACE] & 0x80) {
+		//		player1CurrentDirection = MOVEUP;
+		//		//player1Position.y = newYPosition;
+		//		//isPlayerJumped = true;
+		//		player1Velocity.y = 0;
+		//		player1Velocity += jumpForce;
+		//		isPlayerAtGlass = false;
+		//		isPlayerGrounded = false; // Set to false when jumping
 
-			newYPosition = player1Position.y;
-
-			if (player1Position.y >= windowHeight - player1SpriteHeight) {
-				player1Position.y = newYPosition;
-				isPlayerGrounded = true;
-				player1Velocity.y = 0; // Set grounded state
-				switch (playerWhichArea()) {
-				case 1:theAudioManager->Play1Footstep(); break;
-				case 2:theAudioManager->Play2Footstep(); break;
-				case 3:theAudioManager->Play3Footstep(); break;
-				case 4:theAudioManager->Play4Footstep(); break;
-				}
-			}
-			else {
-				isPlayerGrounded = false; // Player is in the air
-			}
-		}
+		//		switch (playerWhichArea()) {
+		//		case 1:theAudioManager->Play1Jump(); break;
+		//		case 2:theAudioManager->Play2Jump(); break;
+		//		case 3:theAudioManager->Play3Jump(); break;
+		//		case 4:theAudioManager->Play4Jump(); break;
+		//		}
+		//	}
+		//}
+		//else {
+		//	if (player1Position.y >= windowHeight - player1SpriteHeight) {
+		//		player1Position.y = newYPosition;
+		//		isPlayerGrounded = true;
+		//		player1Velocity.y = 0; // Set grounded state
+		//		switch (playerWhichArea()) {
+		//		case 1:theAudioManager->Play1Footstep(); break;
+		//		case 2:theAudioManager->Play2Footstep(); break;
+		//		case 3:theAudioManager->Play3Footstep(); break;
+		//		case 4:theAudioManager->Play4Footstep(); break;
+		//		}
+		//	}
+		//	else {
+		//		isPlayerGrounded = false; // Player is in the air
+		//	}
+		//}
 
 		if (playerWhichSide() != 1) {
 			player1Speed.x *= -1;
@@ -314,12 +307,17 @@ void Update(int frame) {
 			player1CurrentDirection = MOVERIGHT;
 			player1CurrentFrame++;
 			player1Position += player1Speed;
+			isPlayerMoving = true;
 		}
-		if (diKeys[DIK_LEFT] & 0x80)
+		else if (diKeys[DIK_LEFT] & 0x80)
 		{
 			player1CurrentDirection = MOVELEFT;
 			player1CurrentFrame++;
 			player1Position -= player1Speed;
+			isPlayerMoving = true;
+		}
+		else {
+			isPlayerMoving = false;
 		}
 
 	}
@@ -360,6 +358,10 @@ bool playerAtGrass() {
 	return isPlayerAtGlass;
 }
 
+bool playerIsMoving() {
+	return isPlayerMoving;
+}
+
 void cleanSprite()
 {
 
@@ -396,7 +398,7 @@ void levelArrange() {
 			}
 
 			// Collision detection
-			if (playerIsFalling()) {
+			if (playerIsFalling()||playerIsMoving()) {
 				if (((player1Position.y + player1SpriteHeight) >= grassPosition.y) &&
 					((player1Position.y + player1SpriteHeight) <= (grassPosition.y + grassSquare)) &&
 					((player1Position.x + player1SpriteWidth) > grassPosition.x) &&
@@ -407,17 +409,30 @@ void levelArrange() {
 					isPlayerAtGlass = true;// Adjust player position
 
 				}
-				//else {
-				//	if (playerAtGrass()) {
-				//		isPlayerGrounded = false;
-				//		isPlayerAtGlass = false;// Adjust player position
-				//	} // Player is not on the grass
-				//}
-			}
+				if (playerAtGrass()) {
+					if (((player1Position.y + player1SpriteHeight) < grassPosition.y) ||
+						((player1Position.y + player1SpriteHeight) > (grassPosition.y + grassSquare)) ||
+						((player1Position.x + player1SpriteWidth) < grassPosition.x) ||
+						(player1Position.x > (grassPosition.x + grassSquare))) {
+						isPlayerGrounded = false;
+						isPlayerAtGlass = false;
 
-			if (playerAtGrass()) {
+					}
+					//else {
+					//	isPlayerGrounded = true;
+					//	isPlayerAtGlass = true;
+					//}
+					//else {
+					//	if (playerAtGrass()) {
+					//		isPlayerGrounded = false;
+					//		isPlayerAtGlass = false;// Adjust player position
+					//	} // Player is not on the grass
+				}
+
+			}
+			/*if (playerAtGrass()) {
 				if (((player1Position.y + player1SpriteHeight) < grassPosition.y) ||
-					((player1Position.y + player1SpriteHeight) > (grassPosition.y + grassSquare)) || 
+					((player1Position.y + player1SpriteHeight) > (grassPosition.y + grassSquare)) ||
 					((player1Position.x + player1SpriteWidth) < grassPosition.x) ||
 					(player1Position.x > (grassPosition.x + grassSquare))) {
 					isPlayerGrounded = false;
@@ -427,7 +442,7 @@ void levelArrange() {
 					isPlayerGrounded = true;
 					isPlayerAtGlass = true;
 				}
-			}
+			}*/
 		}
 		else if (ch == '\n') {
 			unitWidth = -1;
@@ -437,6 +452,41 @@ void levelArrange() {
 	}
 
 	levelFile.close();
+}
+
+void gravityCheck() {
+	if (playerIsGround()) {
+		player1Velocity.y = 0;
+		player1Position.y = newYPosition;
+		isPlayerGrounded = true; // Set grounded state
+		isPlayerJumped = false;
+		if (diKeys[DIK_SPACE] & 0x80) {
+			player1CurrentDirection = MOVEUP;
+			//player1Position.y = newYPosition;
+			//isPlayerJumped = true;
+			player1Velocity.y = 0;
+			player1Velocity += jumpForce;
+			player1Position += player1Velocity;
+
+			isPlayerAtGlass = false;
+			isPlayerGrounded = false; // Set to false when jumping
+
+			switch (playerWhichArea()) {
+			case 1:theAudioManager->Play1Jump(); break;
+			case 2:theAudioManager->Play2Jump(); break;
+			case 3:theAudioManager->Play3Jump(); break;
+			case 4:theAudioManager->Play4Jump(); break;
+			}
+		}
+	}
+	else {
+		oldYPosition = player1Position.y;
+
+		player1Velocity += gravityAcc;
+		player1Position += player1Velocity;
+
+		newYPosition = player1Position.y;
+	}
 }
 //	use WinMain if you don't want the console
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -535,7 +585,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 
 	while (windowIsRunning())
 	{
-		cout << playerIsFalling() << endl;
+		cout << playerIsGround() << endl;
 		//cout << gameTimer->FramesToUpdate() << endl;
 		GetInput();
 		//Physics
@@ -600,8 +650,11 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 
 		spriteBrush->Draw(player1Texture, &player1Rect, NULL, &player1Position, D3DCOLOR_XRGB(255, 255, 255));
 
+		//gravityCheck();
 		Update(gameTimer->FramesToUpdate());
 		levelArrange();
+
+
 
 		spriteBrush->End();
 		//	End the scene  
