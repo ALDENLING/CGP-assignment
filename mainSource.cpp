@@ -398,15 +398,21 @@ void levelArrange() {
 			}
 
 			// Collision detection
-			if (playerIsFalling()||playerIsMoving()) {
+			if (playerIsFalling() || playerIsMoving()) {
 				if (((player1Position.y + player1SpriteHeight) >= grassPosition.y) &&
 					((player1Position.y + player1SpriteHeight) <= (grassPosition.y + grassSquare)) &&
 					((player1Position.x + player1SpriteWidth) > grassPosition.x) &&
 					(player1Position.x < (grassPosition.x + grassSquare))) {
 
-					// Player is on the grass
 					isPlayerGrounded = true;
-					isPlayerAtGlass = true;// Adjust player position
+					isPlayerAtGlass = true;
+
+					switch (playerWhichArea()) {
+					case 1:theAudioManager->Play1Footstep(); break;
+					case 2:theAudioManager->Play2Footstep(); break;
+					case 3:theAudioManager->Play3Footstep(); break;
+					case 4:theAudioManager->Play4Footstep(); break;
+					}
 
 				}
 				if (playerAtGrass()) {
@@ -416,7 +422,6 @@ void levelArrange() {
 						(player1Position.x > (grassPosition.x + grassSquare))) {
 						isPlayerGrounded = false;
 						isPlayerAtGlass = false;
-
 					}
 					//else {
 					//	isPlayerGrounded = true;
@@ -457,9 +462,16 @@ void levelArrange() {
 void gravityCheck() {
 	if (playerIsGround()) {
 		player1Velocity.y = 0;
-		player1Position.y = newYPosition;
 		isPlayerGrounded = true; // Set grounded state
 		isPlayerJumped = false;
+
+		if (playerAtGrass()) {
+			player1Position.y = newYPosition;
+		}
+		else {
+			player1Position.y = windowHeight - player1SpriteHeight;
+		}
+
 		if (diKeys[DIK_SPACE] & 0x80) {
 			player1CurrentDirection = MOVEUP;
 			//player1Position.y = newYPosition;
@@ -486,6 +498,15 @@ void gravityCheck() {
 		player1Position += player1Velocity;
 
 		newYPosition = player1Position.y;
+
+		if (player1Position.y >= windowHeight - player1SpriteHeight) {
+			switch (playerWhichArea()) {
+			case 1:theAudioManager->Play1Footstep(); break;
+			case 2:theAudioManager->Play2Footstep(); break;
+			case 3:theAudioManager->Play3Footstep(); break;
+			case 4:theAudioManager->Play4Footstep(); break;
+			}
+		}
 	}
 }
 //	use WinMain if you don't want the console

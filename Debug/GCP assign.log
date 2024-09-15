@@ -3,7 +3,8 @@
 C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(281,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
 C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(384,32): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
 C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(385,33): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(460,23): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(483,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(488,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(469,24): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(472,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(495,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(500,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
   GCP assign.vcxproj -> C:\Users\User\source\repos\GCP assign\Debug\GCP assign.exe
