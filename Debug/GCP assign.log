@@ -1,10 +1,10 @@
 ﻿  mainSource.cpp
   C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\include\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(281,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(384,32): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(385,33): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(469,24): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(472,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(495,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(284,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(374,32): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(375,33): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(474,24): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(477,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
 C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(500,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\User\source\repos\GCP assign\GCP assign\mainSource.cpp(505,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
   GCP assign.vcxproj -> C:\Users\User\source\repos\GCP assign\Debug\GCP assign.exe

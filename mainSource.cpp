@@ -11,6 +11,7 @@
 #include <string>
 #include "FrameTimer.h"
 #include "AudioManager.h"
+#include <vector>
 using namespace std;
 //--------------------------------------------------------------------
 
@@ -34,6 +35,12 @@ D3DPRESENT_PARAMETERS d3dPP;
 
 LPDIRECT3DTEXTURE9 standGrassTexture = NULL;
 LPDIRECT3DTEXTURE9 groundGrassTexture = NULL;
+
+LPDIRECT3DTEXTURE9 manTexture = NULL;
+int manWidth = 32;
+int manHeight = 64;
+int coutGrass = 0;
+D3DXVECTOR3 manPosition(0, 0, 0);
 
 //pointer Texture
 LPDIRECT3DTEXTURE9 backgroundTexture = NULL;
@@ -59,7 +66,6 @@ int player1SpriteWidth = player1texturewidth / player1col;
 enum player1Direction { MOVEDOWN, MOVELEFT, MOVERIGHT, MOVEUP };
 int player1CurrentDirection = MOVEDOWN;
 D3DXVECTOR3 player1Position(0, 0, 0);
-D3DXVECTOR3 test(200, 20, 0);
 int player1FrameCounter = 0;
 
 D3DXVECTOR3 grassPosition(0, 0, 0);
@@ -69,8 +75,6 @@ LPD3DXSPRITE spriteBrush = NULL;
 
 int oldYPosition = 0;
 int newYPosition = 0;
-int oldXPosition = 0;
-int newXPosition = 0;
 bool isPlayerGrounded = false;
 bool isPlayerJumped = false;
 bool isPlayerAtGlass = false;
@@ -91,7 +95,6 @@ bool playerIsFalling();
 bool playerAtGrass();
 void gravityCheck();
 bool playerIsMoving();
-
 
 FrameTimer* gameTimer = new FrameTimer();
 
@@ -289,19 +292,6 @@ void Update(int frame) {
 			player1Speed.x *= -1;
 		}
 
-		//nbFrameCounter++; 
-		/*if (diKeys[DIK_UP] & 0x80)
-		{
-			player1CurrentDirection = MOVEUP;
-			player1CurrentFrame++;
-			player1Position.y -= player1Speed;
-		}
-		if (diKeys[DIK_DOWN] & 0x80)
-		{
-			player1CurrentDirection = MOVEDOWN;
-			player1CurrentFrame++;
-			player1Position.y += player1Speed;
-		}*/
 		if (diKeys[DIK_RIGHT] & 0x80)
 		{
 			player1CurrentDirection = MOVERIGHT;
@@ -380,7 +370,7 @@ void levelArrange() {
 	char ch;
 
 	while (levelFile.get(ch)) {
-		if (ch == '0' || ch == '2') {
+		if (ch == '0') {
 			grassPosition.x = unitWidth * grassSquare;
 			grassPosition.y = unitHeight * grassSquare;
 			RECT grassRect;
@@ -389,15 +379,21 @@ void levelArrange() {
 			grassRect.right = grassSquare;
 			grassRect.bottom = grassSquare;
 
-			// Draw the grass
-			if (ch == '0') {
-				spriteBrush->Draw(standGrassTexture, &grassRect, NULL, &grassPosition, D3DCOLOR_XRGB(255, 255, 255));
-			}
-			else if (ch == '2') {
-				spriteBrush->Draw(groundGrassTexture, &grassRect, NULL, &grassPosition, D3DCOLOR_XRGB(255, 255, 255));
+			spriteBrush->Draw(standGrassTexture, &grassRect, NULL, &grassPosition, D3DCOLOR_XRGB(255, 255, 255));
+			if (coutGrass == 0) {
+				RECT manRect;
+				manRect.top = 0;
+				manRect.bottom = manHeight;
+				manRect.left = 0;
+				manRect.right = manWidth;
+
+				manPosition.x = grassPosition.x;
+				manPosition.y = grassPosition.y - manHeight;
+
+				spriteBrush->Draw(manTexture, &manRect, NULL, &manPosition, D3DCOLOR_XRGB(255, 255, 255));
+				coutGrass++;
 			}
 
-			// Collision detection
 			if (playerIsFalling() || playerIsMoving()) {
 				if (((player1Position.y + player1SpriteHeight) >= grassPosition.y) &&
 					((player1Position.y + player1SpriteHeight) <= (grassPosition.y + grassSquare)) &&
@@ -423,31 +419,40 @@ void levelArrange() {
 						isPlayerGrounded = false;
 						isPlayerAtGlass = false;
 					}
-					//else {
-					//	isPlayerGrounded = true;
-					//	isPlayerAtGlass = true;
-					//}
-					//else {
-					//	if (playerAtGrass()) {
-					//		isPlayerGrounded = false;
-					//		isPlayerAtGlass = false;// Adjust player position
-					//	} // Player is not on the grass
 				}
 
 			}
-			/*if (playerAtGrass()) {
-				if (((player1Position.y + player1SpriteHeight) < grassPosition.y) ||
-					((player1Position.y + player1SpriteHeight) > (grassPosition.y + grassSquare)) ||
-					((player1Position.x + player1SpriteWidth) < grassPosition.x) ||
-					(player1Position.x > (grassPosition.x + grassSquare))) {
-					isPlayerGrounded = false;
-					isPlayerAtGlass = false;
+			if (!playerIsGround()) {
+				// Check for collision from below
+				if (player1Position.y + player1SpriteHeight <= grassPosition.y &&
+					player1Position.y + player1SpriteHeight + player1Velocity.y >= grassPosition.y &&
+					(player1Position.x + player1SpriteWidth) > grassPosition.x &&
+					player1Position.x < (grassPosition.x + grassSquare)) {
+
+					// Collision from below, adjust position and reset velocity
+					player1Position.y = grassPosition.y - player1SpriteHeight; // Set player on top of the platform
+					player1Velocity.y = 0; // Reset vertical velocity
 				}
-				else {
-					isPlayerGrounded = true;
-					isPlayerAtGlass = true;
+
+				// Check for side collision (left and right)
+				if ((player1Position.y + player1SpriteHeight > grassPosition.y) &&
+					(player1Position.y < (grassPosition.y + grassSquare))) {
+
+					// Collision from the right
+					if (player1Position.x + player1SpriteWidth > grassPosition.x &&
+						player1Position.x < grassPosition.x) {
+						player1Position.x = grassPosition.x - player1SpriteWidth; // Move the player to the left of the platform
+						player1Speed.x *= -1; // Reverse horizontal speed
+					}
+
+					// Collision from the left
+					if (player1Position.x < (grassPosition.x + grassSquare) &&
+						(player1Position.x + player1SpriteWidth) >(grassPosition.x + grassSquare)) {
+						player1Position.x = grassPosition.x + grassSquare; // Move the player to the right of the platform
+						player1Speed.x *= -1; // Reverse horizontal speed
+					}
 				}
-			}*/
+			}
 		}
 		else if (ch == '\n') {
 			unitWidth = -1;
@@ -553,12 +558,10 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 		return 0;
 	}
 
-	hr = D3DXCreateTextureFromFile(d3dDevice, "image/groundgrass.png", &groundGrassTexture);
-
-	/*hr = D3DXCreateTextureFromFileEx(d3dDevice, "image/background.png", D3DX_DEFAULT, D3DX_DEFAULT,
+	hr = D3DXCreateTextureFromFileEx(d3dDevice, "image/militia.png", D3DX_DEFAULT, D3DX_DEFAULT,
 		D3DX_DEFAULT, NULL, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
 		D3DX_DEFAULT, D3DX_DEFAULT, D3DCOLOR_XRGB(255, 255, 255),
-		NULL, NULL, &backgroundTexture);*/
+		NULL, NULL, &player1Texture);
 
 	if (FAILED(hr))
 	{
@@ -566,10 +569,10 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 		return 0;
 	}
 
-	hr = D3DXCreateTextureFromFileEx(d3dDevice, "image/militia.png", D3DX_DEFAULT, D3DX_DEFAULT,
+	hr = D3DXCreateTextureFromFileEx(d3dDevice, "image/man.png", D3DX_DEFAULT, D3DX_DEFAULT,
 		D3DX_DEFAULT, NULL, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
 		D3DX_DEFAULT, D3DX_DEFAULT, D3DCOLOR_XRGB(255, 255, 255),
-		NULL, NULL, &player1Texture);
+		NULL, NULL, &manTexture);
 
 	if (FAILED(hr))
 	{
@@ -606,7 +609,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 
 	while (windowIsRunning())
 	{
-		cout << playerIsGround() << endl;
+		cout << player1Speed.y << endl;
 		//cout << gameTimer->FramesToUpdate() << endl;
 		GetInput();
 		//Physics
@@ -671,11 +674,11 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 
 		spriteBrush->Draw(player1Texture, &player1Rect, NULL, &player1Position, D3DCOLOR_XRGB(255, 255, 255));
 
+
+
 		//gravityCheck();
 		Update(gameTimer->FramesToUpdate());
 		levelArrange();
-
-
 
 		spriteBrush->End();
 		//	End the scene  
@@ -683,6 +686,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nSho
 
 		//	Present the back buffer to screen
 		d3dDevice->Present(NULL, NULL, NULL, NULL);
+		coutGrass = 0;
 		//Sound
 		//	To Do:
 
